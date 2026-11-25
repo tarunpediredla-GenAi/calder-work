@@ -1,0 +1,20 @@
+FROM python:3.12-slim
+
+# Non-root isolated test runner image.
+# Generated code runs inside this container with --network=none and zero host secrets.
+RUN useradd --create-home --uid 1000 sandbox
+
+WORKDIR /workspace
+
+RUN pip install --no-cache-dir \
+    pytest==8.3.4 \
+    pytest-asyncio==0.24.0 \
+    httpx==0.28.1 \
+    fastapi==0.115.6 \
+    sqlalchemy==2.0.36 \
+    aiosqlite==0.20.0 \
+    pydantic==2.10.3
+
+USER sandbox
+
+ENTRYPOINT ["pytest", "-v", "--tb=short"]

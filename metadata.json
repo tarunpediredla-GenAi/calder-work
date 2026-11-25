@@ -1,0 +1,6 @@
+{
+  "name": "Calder Works",
+  "description": "Software delivery workspace for engineering teams to submit feature requests, review code changes, inspect test results, and approve pull requests.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

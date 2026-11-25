@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-calder}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-calder_local_dev_only}
+      POSTGRES_DB: ${POSTGRES_DB:-calder_works}
+    ports:
+      - "5432:5432"
+    volumes:
+      - calder_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-calder} -d ${POSTGRES_DB:-calder_works}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  sandbox-image:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.sandbox
+    image: ${CALDER_SANDBOX_IMAGE:-calder-works-sandbox:latest}
+    profiles: ["build-only"]
+
+  calder-api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-calder}:${POSTGRES_PASSWORD:-calder_local_dev_only}@postgres:5432/${POSTGRES_DB:-calder_works}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      GITHUB_API_BASE: ${GITHUB_API_BASE:-https://api.github.com}
+      CALDER_SANDBOX_IMAGE: ${CALDER_SANDBOX_IMAGE:-calder-works-sandbox:latest}
+      CALDER_SANDBOX_TIMEOUT_SECONDS: ${CALDER_SANDBOX_TIMEOUT_SECONDS:-90}
+      CALDER_MAX_AUTO_CORRECTIONS: ${CALDER_MAX_AUTO_CORRECTIONS:-2}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/calder-workspaces:/tmp/calder-workspaces
+    ports:
+      - "8000:8000"
+
+volumes:
+  calder_pgdata:
